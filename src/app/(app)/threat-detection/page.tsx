@@ -8,13 +8,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from '@/components/common/SubmitButton';
+import { Button } from '@/components/ui/button';
 import { ResultDisplayCard, ResultItem } from '@/components/common/ResultDisplayCard';
-import { type ThreatDetectionOutput } from '@/ai/flows/threat-detection'; // Keep this type import
-import { threatDetectionAction } from './actions'; // Import the action
-import { ScanSearch, ShieldAlert, FileText, ListChecks, AlertTriangle, Activity, ShieldCheck } from 'lucide-react';
+import { type ThreatDetectionOutput } from '@/ai/flows/threat-detection';
+import { threatDetectionAction } from './actions';
+import { ScanSearch, ShieldAlert, FileText, ListChecks, AlertTriangle, Activity, ShieldCheck, Download } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const ORIGINAL_DATA_LS_KEY = 'forensic_simulation_original_data';
+const ORIGINAL_FILENAME_LS_KEY = 'forensic_simulation_original_filename';
+const RECOVERED_DATA_LS_KEY = 'forensic_simulation_recovered_data';
 
 export default function ThreatDetectionPage() {
   const [isPending, startTransition] = useTransition();
@@ -63,10 +68,77 @@ export default function ThreatDetectionPage() {
   const getThreatLevelBadgeVariant = (level: string) => {
     switch (level.toLowerCase()) {
       case 'high': return 'destructive';
-      case 'medium': return 'secondary'; // Using secondary for orange/yellowish
-      case 'low': return 'default'; // Using default for green/blue or less prominent
+      case 'medium': return 'secondary'; 
+      case 'low': return 'default'; 
       default: return 'outline';
     }
+  };
+
+  const handleDownloadReport = () => {
+    if (!result) {
+      toast({ variant: "destructive", title: "No Results", description: "Please run a threat analysis first." });
+      return;
+    }
+
+    let reportContent = "Forensic Simulation & Threat Analysis Report\n";
+    reportContent += "============================================\n\n";
+    
+    const originalFileName = localStorage.getItem(ORIGINAL_FILENAME_LS_KEY) || "Unknown File";
+    reportContent += `Original File: ${originalFileName}\n`;
+    reportContent += `Date of Report: ${new Date().toLocaleString()}\n\n`;
+
+    reportContent += "--------------------------------------------\n";
+    reportContent += "1. Original File Content (Snapshot from Simulation)\n";
+    reportContent += "--------------------------------------------\n";
+    const originalData = localStorage.getItem(ORIGINAL_DATA_LS_KEY);
+    if (originalData) {
+      reportContent += originalData.substring(0, 1000) + (originalData.length > 1000 ? "\n... (content truncated for report)" : "");
+    } else {
+      reportContent += "Original file content not found in simulation storage.";
+    }
+    reportContent += "\n\n";
+
+    reportContent += "--------------------------------------------\n";
+    reportContent += "2. Simulated Recovered File Content (Used for this Analysis)\n";
+    reportContent += "--------------------------------------------\n";
+    const recoveredData = localStorage.getItem(RECOVERED_DATA_LS_KEY);
+     if (recoveredData) {
+      reportContent += recoveredData;
+    } else {
+      reportContent += "Recovered file content not found in simulation storage (this should be the data analyzed).";
+    }
+    reportContent += "\n\n";
+    
+    reportContent += "--------------------------------------------\n";
+    reportContent += "3. Threat Detection Analysis\n";
+    reportContent += "--------------------------------------------\n\n";
+
+    reportContent += `Summary:\n${result.summary}\n\n`;
+
+    reportContent += "Identified Threats:\n";
+    if (result.threatsIdentified && result.threatsIdentified.length > 0) {
+      result.threatsIdentified.forEach(threat => {
+        reportContent += `  - Threat Name: ${threat.threatName}\n`;
+        reportContent += `    Severity: ${threat.threatLevel}\n`;
+        reportContent += `    Description: ${threat.description}\n\n`;
+      });
+    } else {
+      reportContent += "  No specific threats identified in the analyzed data.\n\n";
+    }
+
+    reportContent += "--------------------------------------------\n";
+    reportContent += "End of Report\n";
+
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Forensic-Report-for-${originalFileName.replace(/\.[^/.]+$/, "")}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+
+    toast({ title: "Report Downloaded", description: `Report for ${originalFileName} has been generated.` });
   };
 
 
@@ -174,8 +246,25 @@ export default function ThreatDetectionPage() {
               </CardContent>
             </Card>
           )}
+          <Card className="shadow-lg">
+            <CardHeader>
+                <div className="flex items-center gap-3">
+                    <Download className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-xl">Download Report</CardTitle>
+                </div>
+              <CardDescription>Download a consolidated text report of the forensic simulation and threat analysis.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleDownloadReport} className="w-full sm:w-auto">
+                <Download className="mr-2 h-4 w-4" />
+                Download Forensic Report
+              </Button>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
   );
 }
+
+    
