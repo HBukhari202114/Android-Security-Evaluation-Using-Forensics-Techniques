@@ -9,25 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from '@/components/common/SubmitButton';
 import { ResultDisplayCard, ResultItem } from '@/components/common/ResultDisplayCard';
-import { threatDetection, type ThreatDetectionInput, type ThreatDetectionOutput } from '@/ai/flows/threat-detection';
-import { ScanSearch, ShieldAlert, FileText, ListChecks, AlertTriangle, Activity } from 'lucide-react';
+import { type ThreatDetectionOutput } from '@/ai/flows/threat-detection'; // Keep this type import
+import { threatDetectionAction } from './actions'; // Import the action
+import { ScanSearch, ShieldAlert, FileText, ListChecks, AlertTriangle, Activity, ShieldCheck } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
-async function threatDetectionAction(input: ThreatDetectionInput): Promise<{ success: true, data: ThreatDetectionOutput } | { success: false, error: string }> {
-  'use server';
-  try {
-    if (!input.extractedData.trim()) {
-      return { success: false, error: "Extracted data cannot be empty." };
-    }
-    const result = await threatDetection(input);
-    return { success: true, data: result };
-  } catch (error) {
-    console.error("Error in threatDetectionAction:", error);
-    return { success: false, error: (error instanceof Error ? error.message : "An unknown error occurred") };
-  }
-}
 
 export default function ThreatDetectionPage() {
   const [isPending, startTransition] = useTransition();
