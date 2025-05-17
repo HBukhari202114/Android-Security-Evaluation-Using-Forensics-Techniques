@@ -30,7 +30,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-br from-background to-secondary pattern-dots pattern-primary pattern-opacity-10 pattern-size-4">
        <div className="absolute top-8 left-8 flex items-center space-x-2">
          <ShieldHalf className="h-10 w-10 text-primary" />
-         <h1 className="text-2xl font-bold text-foreground">Mobile Forensics Hub</h1>
+         <h1 className="text-2xl font-bold text-foreground">Android Forensics Hub</h1>
        </div>
       <LoginForm />
     </main>

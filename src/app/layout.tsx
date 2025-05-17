@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Mobile Forensics Hub',
+  title: 'Android Forensics Hub',
   description: 'Android security evaluation using forensic techniques.',
 };
 

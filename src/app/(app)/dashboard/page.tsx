@@ -18,7 +18,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader 
         title="Dashboard" 
-        description="Welcome to Mobile Forensics Hub. Access tools and analysis below."
+        description="Welcome to Android Forensics Hub. Access tools and analysis below."
         icon={LayoutDashboard}
       />
 
@@ -26,7 +26,7 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl">Overview</CardTitle>
           <CardDescription>
-            Mobile Forensics Hub provides AI-powered tools for Android security evaluation.
+            Android Forensics Hub provides AI-powered tools for Android security evaluation.
             Navigate through the features using the sidebar or the quick links below.
           </CardDescription>
         </CardHeader>

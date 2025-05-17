@@ -5,6 +5,7 @@ import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { AppFooter } from '@/components/layout/AppFooter'; // Added Footer import
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { ShieldHalf } from 'lucide-react';
 
@@ -22,7 +23,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
         <ShieldHalf className="h-16 w-16 text-primary animate-pulse" />
-        <p className="text-muted-foreground mt-2">Loading Mobile Forensics Hub...</p>
+        <p className="text-muted-foreground mt-2">Loading Android Forensics Hub...</p>
       </div>
     );
   }
@@ -35,6 +36,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="p-6 flex-1">
             {children}
           </div>
+          <AppFooter />
         </SidebarInset>
       </div>
     </SidebarProvider>

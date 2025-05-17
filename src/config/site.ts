@@ -11,7 +11,7 @@ export type NavItem = {
 };
 
 export const siteConfig = {
-  name: "Mobile Forensics Hub",
+  name: "Android Forensics Hub",
   description: "Android security evaluation using forensic techniques.",
   sidebarNav: [
     {
