@@ -11,13 +11,13 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const SimulateRecoveryInputSchema = z.object({
+const SimulateRecoveryInputSchema = z.object({
   originalData: z.string().describe('The original data that was supposedly wiped.'),
   recoveryEffort: z.enum(['low', 'medium', 'high']).describe('The level of effort applied to recovery.'),
 });
 export type SimulateRecoveryInput = z.infer<typeof SimulateRecoveryInputSchema>;
 
-export const SimulateRecoveryOutputSchema = z.object({
+const SimulateRecoveryOutputSchema = z.object({
   recoveredData: z.string().describe('The data that was "recovered". This may be partial or corrupted.'),
   recoveryLog: z.string().describe('A log detailing the simulated recovery process, successes, and failures.'),
 });
