@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { DatabaseZap, FileText, Terminal, PlayCircle, ScanSearch, AlertTriangle, Activity } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { ResultDisplayCard } from '@/components/common/ResultDisplayCard'; // Added import
 
 const MOCK_EXTRACTED_DATA = `Contacts:
 - John Doe: +1-555-1234, john.doe@email.com
