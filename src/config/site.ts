@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, ShieldCheck, Recycle, DatabaseZap, ScanSearch, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, ShieldCheck, Recycle, DatabaseZap, ScanSearch, ShieldAlert, Microscope } from 'lucide-react'; // Added Microscope
 
 export type NavItem = {
   title: string;
@@ -18,6 +18,11 @@ export const siteConfig = {
       title: "Dashboard",
       href: "/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      title: "Forensic Simulation", // New Page
+      href: "/forensic-simulation",
+      icon: Microscope, 
     },
     {
       title: "Wipe Accuracy",
@@ -41,3 +46,4 @@ export const siteConfig = {
     },
   ] satisfies NavItem[],
 };
+
