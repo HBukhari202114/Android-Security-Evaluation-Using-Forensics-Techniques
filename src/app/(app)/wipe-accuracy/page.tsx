@@ -8,23 +8,10 @@ import { Label } from "@/components/ui/label";
 import { FileUploadToDataUri } from '@/components/common/FileUploadToDataUri';
 import { SubmitButton } from '@/components/common/SubmitButton';
 import { ResultDisplayCard, ResultItem } from '@/components/common/ResultDisplayCard';
-import { assessWipeAccuracy, type AssessWipeAccuracyInput, type AssessWipeAccuracyOutput } from '@/ai/flows/wipe-accuracy-assessment';
+import { type AssessWipeAccuracyOutput } from '@/ai/flows/wipe-accuracy-assessment';
+import { assessWipeAccuracyAction } from './actions'; // Correctly imported
 import { ShieldCheck, FileText, AlertTriangle, Activity } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-
-async function assessWipeAccuracyAction(input: AssessWipeAccuracyInput): Promise<{ success: true, data: AssessWipeAccuracyOutput } | { success: false, error: string }> {
-  'use server';
-  try {
-    if (!input.wipeLogDataUri) {
-      return { success: false, error: "Wipe log file is required." };
-    }
-    const result = await assessWipeAccuracy(input);
-    return { success: true, data: result };
-  } catch (error) {
-    console.error("Error in assessWipeAccuracyAction:", error);
-    return { success: false, error: (error instanceof Error ? error.message : "An unknown error occurred") };
-  }
-}
 
 export default function WipeAccuracyPage() {
   const [isPending, startTransition] = useTransition();
