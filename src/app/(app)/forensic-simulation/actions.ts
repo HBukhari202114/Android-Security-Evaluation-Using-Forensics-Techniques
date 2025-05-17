@@ -6,7 +6,7 @@ import { simulateRecovery, type SimulateRecoveryInput, type SimulateRecoveryOutp
 export async function simulateRecoveryAction(input: SimulateRecoveryInput): Promise<{ success: true, data: SimulateRecoveryOutput } | { success: false, error: string }> {
   try {
     if (!input.originalData.trim()) {
-      return { success: false, error: "Original data for recovery cannot be empty." };
+      return { success: false, error: "Original file content for recovery cannot be empty." };
     }
     const result = await simulateRecovery(input);
     return { success: true, data: result };
@@ -15,3 +15,4 @@ export async function simulateRecoveryAction(input: SimulateRecoveryInput): Prom
     return { success: false, error: (error instanceof Error ? error.message : "An unknown error occurred during recovery simulation") };
   }
 }
+

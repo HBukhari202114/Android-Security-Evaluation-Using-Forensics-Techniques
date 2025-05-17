@@ -18,11 +18,13 @@ import { Microscope, Eraser, ShieldQuestion, Activity, AlertTriangle, FileUp, Re
 import { useToast } from "@/hooks/use-toast";
 
 const ORIGINAL_DATA_LS_KEY = 'forensic_simulation_original_data';
-const RECOVERED_DATA_LS_KEY = 'forensic_simulation_recovered_data';
+const ORIGINAL_FILENAME_LS_KEY = 'forensic_simulation_original_filename';
+const RECOVERED_DATA_LS_KEY = 'forensic_simulation_recovered_data'; // Stores recoveredFileContent
 
 export default function ForensicSimulationPage() {
   const [isPendingWipe, startWipeTransition] = useTransition();
   const [isPendingRecovery, startRecoveryTransition] = useTransition();
+  
   const [originalDataContent, setOriginalDataContent] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [isWiped, setIsWiped] = useState(false);
@@ -35,40 +37,39 @@ export default function ForensicSimulationPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if data was previously wiped to maintain state across refreshes (optional)
     const storedOriginalData = localStorage.getItem(ORIGINAL_DATA_LS_KEY);
+    const storedOriginalFileName = localStorage.getItem(ORIGINAL_FILENAME_LS_KEY);
     if (storedOriginalData) {
       setOriginalDataContent(storedOriginalData);
-      setIsWiped(true); // Assume if original data exists, it was "wiped"
-      // setUploadedFileName("previously loaded data"); // Could store filename too
+      setUploadedFileName(storedOriginalFileName || "previously loaded data");
+      setIsWiped(true); 
     }
   }, []);
 
   const handleFileLoad = (dataUri: string, fileName: string) => {
-    // Assuming text file, extract content. For binary, this would be more complex.
-    // Simple split for text-based data URIs.
     const base64Marker = ';base64,';
     const rawContent = atob(dataUri.substring(dataUri.indexOf(base64Marker) + base64Marker.length));
     setOriginalDataContent(rawContent);
     setUploadedFileName(fileName);
-    setIsWiped(false); // New file upload resets wipe state
-    setRecoveryResult(null); // Reset recovery state
+    setIsWiped(false); 
+    setRecoveryResult(null); 
     if (dataUri) {
       toast({ title: "File Ready", description: `"${fileName}" loaded and ready for wipe simulation.` });
     }
   };
 
   const handleSimulateWipe = () => {
-    if (!originalDataContent) {
+    if (!originalDataContent || !uploadedFileName) {
       toast({ variant: "destructive", title: "No Data", description: "Please upload a file first." });
       return;
     }
     startWipeTransition(() => {
       localStorage.setItem(ORIGINAL_DATA_LS_KEY, originalDataContent);
-      localStorage.removeItem(RECOVERED_DATA_LS_KEY); // Clear any old recovered data
+      localStorage.setItem(ORIGINAL_FILENAME_LS_KEY, uploadedFileName);
+      localStorage.removeItem(RECOVERED_DATA_LS_KEY); 
       setIsWiped(true);
       setRecoveryResult(null);
-      toast({ title: "Wipe Simulated", description: `Data from "${uploadedFileName}" has been "wiped". You can now attempt recovery.` });
+      toast({ title: "Wipe Simulated", description: `Content of file "${uploadedFileName}" has been "wiped". You can now attempt recovery.` });
     });
   };
 
@@ -76,21 +77,23 @@ export default function ForensicSimulationPage() {
     setRecoveryError(null);
     setRecoveryResult(null);
     const dataToRecover = localStorage.getItem(ORIGINAL_DATA_LS_KEY);
+    const nameOfFileToRecover = localStorage.getItem(ORIGINAL_FILENAME_LS_KEY);
 
     if (!dataToRecover) {
-      toast({ variant: "destructive", title: "No Wiped Data", description: "Please simulate a wipe first." });
+      toast({ variant: "destructive", title: "No Wiped Data", description: "Please simulate a wipe first for a file." });
       return;
     }
 
     startRecoveryTransition(async () => {
       const actionResult = await simulateRecoveryAction({ 
-        originalData: dataToRecover, 
+        originalData: dataToRecover,
+        originalFileName: nameOfFileToRecover || undefined, 
         recoveryEffort 
       });
       if (actionResult.success) {
         setRecoveryResult(actionResult.data);
-        localStorage.setItem(RECOVERED_DATA_LS_KEY, actionResult.data.recoveredData);
-        toast({ title: "Recovery Simulated", description: "Data recovery attempt complete. View results below." });
+        localStorage.setItem(RECOVERED_DATA_LS_KEY, actionResult.data.recoveredFileContent);
+        toast({ title: "Recovery Simulated", description: `File recovery attempt for "${nameOfFileToRecover || 'the file'}" complete. View results below.` });
       } else {
         setRecoveryError(actionResult.error);
         toast({ variant: "destructive", title: "Recovery Failed", description: actionResult.error });
@@ -102,33 +105,32 @@ export default function ForensicSimulationPage() {
     if (localStorage.getItem(RECOVERED_DATA_LS_KEY)) {
       router.push('/data-extraction?source=simulation');
     } else {
-      toast({ variant: "destructive", title: "No Recovered Data", description: "Please simulate recovery first or ensure recovery was successful." });
+      toast({ variant: "destructive", title: "No Recovered File Content", description: "Please simulate file recovery first or ensure recovery was successful." });
     }
   };
 
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Forensic Simulation: Wipe & Recovery"
-        description="Simulate data wiping from a device and then attempt to recover it."
+        title="Forensic Simulation: File Wipe & Recovery"
+        description="Simulate wiping a file from a device and then attempt to recover its content."
         icon={Microscope}
       />
 
-      {/* Step 1: Upload and Wipe */}
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-3">
             <FileUp className="h-6 w-6 text-primary" />
-            <CardTitle className="text-xl">Step 1: Upload Data for Wipe Simulation</CardTitle>
+            <CardTitle className="text-xl">Step 1: Upload File for Wipe Simulation</CardTitle>
           </div>
-          <CardDescription>Upload a text file representing the data on a mobile device.</CardDescription>
+          <CardDescription>Upload a text-based file (e.g., .txt, .log, .csv) representing data on a mobile device.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <FileUploadToDataUri
             id="deviceDataFile"
-            label="Device Data File (e.g., .txt, .log)"
+            label="Device File (e.g., .txt, .log, .csv)"
             onFileLoad={handleFileLoad}
-            accept=".txt,.log,text/plain"
+            accept=".txt,.log,.csv,text/*"
           />
           {uploadedFileName && originalDataContent && (
             <div className="p-3 border rounded-md bg-secondary/30">
@@ -143,26 +145,25 @@ export default function ForensicSimulationPage() {
             </div>
           )}
           <Button onClick={handleSimulateWipe} disabled={!originalDataContent || isPendingWipe || isWiped} className="w-full sm:w-auto">
-            {isPendingWipe ? <><Activity className="mr-2 h-4 w-4 animate-spin" />Simulating Wipe...</> : <><Eraser className="mr-2 h-4 w-4" />Simulate Data Wipe</>}
+            {isPendingWipe ? <><Activity className="mr-2 h-4 w-4 animate-spin" />Simulating Wipe...</> : <><Eraser className="mr-2 h-4 w-4" />Simulate File Wipe</>}
           </Button>
           {isWiped && (
             <div className="p-3 border border-green-500 rounded-md bg-green-50 dark:bg-green-900/30">
-              <p className="text-sm font-semibold text-green-700 dark:text-green-400">Data Wipe Simulated Successfully!</p>
+              <p className="text-sm font-semibold text-green-700 dark:text-green-400">File Wipe Simulated Successfully!</p>
               <p className="text-xs text-muted-foreground">The content of "{uploadedFileName || 'uploaded file'}" has been marked as 'wiped'. Proceed to recovery.</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Step 2: Recover Data */}
       {isWiped && (
         <Card className="shadow-lg">
           <CardHeader>
             <div className="flex items-center gap-3">
               <Recycle className="h-6 w-6 text-primary" />
-              <CardTitle className="text-xl">Step 2: Simulate Data Recovery</CardTitle>
+              <CardTitle className="text-xl">Step 2: Simulate File Content Recovery</CardTitle>
             </div>
-            <CardDescription>Attempt to recover the 'wiped' data. Choose a recovery effort level.</CardDescription>
+            <CardDescription>Attempt to recover the 'wiped' file's content. Choose a recovery effort level.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
@@ -179,15 +180,15 @@ export default function ForensicSimulationPage() {
               </Select>
             </div>
             <Button onClick={handleSimulateRecovery} disabled={isPendingRecovery || !isWiped} className="w-full sm:w-auto">
-              {isPendingRecovery ? <><Activity className="mr-2 h-4 w-4 animate-spin" />Attempting Recovery...</> : "Attempt Data Recovery"}
+              {isPendingRecovery ? <><Activity className="mr-2 h-4 w-4 animate-spin" />Attempting Recovery...</> : "Attempt File Recovery"}
             </Button>
           </CardContent>
         </Card>
       )}
 
       {isPendingRecovery && (
-        <ResultDisplayCard title="Recovery in Progress..." icon={Activity} className="animate-pulse">
-            <p className="text-muted-foreground">AI is simulating data recovery...</p>
+        <ResultDisplayCard title="File Recovery in Progress..." icon={Activity} className="animate-pulse">
+            <p className="text-muted-foreground">AI is simulating file content recovery...</p>
              <div className="space-y-2 mt-2">
                 <div className="h-4 bg-muted rounded w-3/4"></div>
                 <div className="h-4 bg-muted rounded w-1/2"></div>
@@ -197,14 +198,14 @@ export default function ForensicSimulationPage() {
       )}
 
       {recoveryError && !isPendingRecovery && (
-        <ResultDisplayCard title="Recovery Simulation Error" icon={AlertTriangle} className="border-destructive">
+        <ResultDisplayCard title="File Recovery Simulation Error" icon={AlertTriangle} className="border-destructive">
           <p className="text-destructive">{recoveryError}</p>
         </ResultDisplayCard>
       )}
 
       {recoveryResult && !isPendingRecovery && (
         <>
-          <ResultDisplayCard title="Recovery Simulation Results" icon={ShieldQuestion}>
+          <ResultDisplayCard title={`File Recovery Simulation Results for "${uploadedFileName || 'unknown file'}"`} icon={ShieldQuestion}>
             <ResultItem label="Recovery Log" value={recoveryResult.recoveryLog} />
           </ResultDisplayCard>
           <Card className="shadow-lg">
@@ -213,15 +214,17 @@ export default function ForensicSimulationPage() {
                     <DatabaseZap className="h-6 w-6 text-primary" />
                     <CardTitle className="text-xl">Step 3: Proceed to Data Extraction</CardTitle>
                 </div>
-              <CardDescription>The "recovered" data is now available. Proceed to extract and analyze it.</CardDescription>
+              <CardDescription>The "recovered" file content is now available. Proceed to extract and analyze it.</CardDescription>
             </CardHeader>
             <CardContent>
+              <Label htmlFor="recoveredFileContentTextarea" className="text-sm font-medium">Recovered File Content:</Label>
               <Textarea 
-                value={recoveryResult.recoveredData} 
+                id="recoveredFileContentTextarea"
+                value={recoveryResult.recoveredFileContent} 
                 readOnly 
                 rows={10}
-                className="font-mono text-xs bg-secondary/30 mb-4"
-                placeholder="Recovered data will appear here..."
+                className="font-mono text-xs bg-secondary/30 mb-4 mt-1"
+                placeholder="Recovered file content will appear here..."
               />
               <Button onClick={handleProceedToExtraction} className="w-full sm:w-auto">
                 <DatabaseZap className="mr-2 h-4 w-4" />

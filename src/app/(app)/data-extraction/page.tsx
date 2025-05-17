@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation'; // Added useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label"; // Added Label
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { DatabaseZap, FileText, Terminal, PlayCircle, ScanSearch, AlertTriangle, Activity } from 'lucide-react';
@@ -42,14 +42,14 @@ const MOCK_EXTRACTION_LOGS = `[INFO] Starting data extraction process...
 [SUMMARY] Total data extracted: 1.2 GB. Issues encountered: 2 (minor).
 `;
 
-const RECOVERED_DATA_LS_KEY = 'forensic_simulation_recovered_data';
+const RECOVERED_DATA_LS_KEY = 'forensic_simulation_recovered_data'; // This now stores recovered file content
 
 
 export default function DataExtractionPage() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [extractedData, setExtractedData] = useState<string>('');
-  const [extractionLogs, setExtractionLogs] = useState<string>('');
+  const [dataToDisplay, setDataToDisplay] = useState<string>(''); // Renamed for clarity
+  const [displayLogs, setDisplayLogs] = useState<string>(''); // Renamed for clarity
   const [dataSource, setDataSource] = useState<'mock' | 'simulation'>('mock');
 
   const router = useRouter();
@@ -59,22 +59,21 @@ export default function DataExtractionPage() {
   useEffect(() => {
     const sourceParam = searchParams.get('source');
     if (sourceParam === 'simulation') {
-      const recoveredDataFromStorage = localStorage.getItem(RECOVERED_DATA_LS_KEY);
-      if (recoveredDataFromStorage) {
-        setExtractedData(recoveredDataFromStorage);
-        setExtractionLogs(`[INFO] Data loaded from forensic simulation recovery process.\n[INFO] Displaying recovered data for analysis.`);
+      const recoveredFileContentFromStorage = localStorage.getItem(RECOVERED_DATA_LS_KEY);
+      if (recoveredFileContentFromStorage) {
+        setDataToDisplay(recoveredFileContentFromStorage);
+        setDisplayLogs(`[INFO] Recovered file content loaded from forensic simulation.\n[INFO] Displaying this content for analysis as 'extracted data'.`);
         setDataSource('simulation');
-        toast({ title: "Recovered Data Loaded", description: "Displaying data from the recovery simulation." });
+        toast({ title: "Recovered File Content Loaded", description: "Displaying content from the file recovery simulation." });
       } else {
-        toast({ variant: "destructive", title: "Simulation Data Missing", description: "Could not load data from simulation. Using mock data." });
-        setExtractedData(MOCK_EXTRACTED_DATA);
-        setExtractionLogs(MOCK_EXTRACTION_LOGS);
+        toast({ variant: "destructive", title: "Simulation Data Missing", description: "Could not load file content from simulation. Using mock data." });
+        setDataToDisplay(MOCK_EXTRACTED_DATA);
+        setDisplayLogs(MOCK_EXTRACTION_LOGS);
         setDataSource('mock');
       }
     } else {
-      // Default to mock data if no source or other source specified
-      setExtractedData(MOCK_EXTRACTED_DATA);
-      setExtractionLogs(MOCK_EXTRACTION_LOGS);
+      setDataToDisplay(MOCK_EXTRACTED_DATA);
+      setDisplayLogs(MOCK_EXTRACTION_LOGS);
       setDataSource('mock');
     }
   }, [searchParams, toast]);
@@ -82,7 +81,7 @@ export default function DataExtractionPage() {
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (isExtracting && dataSource === 'mock') { // Only run progress for mock extraction
+    if (isExtracting && dataSource === 'mock') { 
       setProgress(0);
       let currentProgress = 0;
       timer = setInterval(() => {
@@ -92,41 +91,38 @@ export default function DataExtractionPage() {
         } else {
           clearInterval(timer);
           setIsExtracting(false);
-          // Data already set by initial useEffect
           toast({ title: "Mock Extraction Complete", description: "Mock data extraction finished." });
         }
       }, 300);
     } else if (dataSource === 'simulation') {
-        setIsExtracting(false); // Data is already "extracted" from simulation
+        setIsExtracting(false); 
     }
     return () => clearInterval(timer);
   }, [isExtracting, toast, dataSource]);
 
   const handleStartExtraction = () => {
     if (dataSource === 'simulation') {
-        toast({ title: "Data Already Loaded", description: "Recovered data from simulation is already displayed."});
+        toast({ title: "Data Already Loaded", description: "Recovered file content from simulation is already displayed."});
         return;
     }
     setIsExtracting(true);
-    // setExtractedData(''); // Keep existing mock data until "extraction" completes
-    // setExtractionLogs('');
     toast({ title: "Extraction Started", description: "Simulating mock data extraction..." });
   };
 
   const handleAnalyzeThreats = () => {
-    if (extractedData) {
-      const encodedData = encodeURIComponent(extractedData);
+    if (dataToDisplay) {
+      const encodedData = encodeURIComponent(dataToDisplay);
       router.push(`/threat-detection?extractedData=${encodedData}`);
     } else {
-      toast({ variant: "destructive", title: "No Data", description: "Extract data first before analyzing threats." });
+      toast({ variant: "destructive", title: "No Data", description: "Extract data or load simulation data first before analyzing threats." });
     }
   };
 
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Data Extraction"
-        description={dataSource === 'simulation' ? "Viewing recovered data from simulation." : "Simulate the mobile data extraction process and view mock results."}
+        title="Data Extraction & Analysis"
+        description={dataSource === 'simulation' ? "Viewing recovered file content from simulation for further analysis." : "Simulate the mobile data extraction process and view mock results."}
         icon={DatabaseZap}
       />
 
@@ -138,7 +134,7 @@ export default function DataExtractionPage() {
           </div>
           <CardDescription>
             {dataSource === 'simulation' 
-              ? "Data below is from the forensic recovery simulation."
+              ? "Content below is from the forensic file recovery simulation."
               : "Initiate the simulated data extraction from a mobile device."}
           </CardDescription>
         </CardHeader>
@@ -163,19 +159,19 @@ export default function DataExtractionPage() {
             </div>
           )}
            {dataSource === 'simulation' && (
-             <p className="text-sm text-muted-foreground">Data was loaded from the recovery simulation. No further "extraction" needed here.</p>
+             <p className="text-sm text-muted-foreground">Data was loaded from the file recovery simulation. No further "extraction" needed here. This content will be used for threat analysis.</p>
            )}
         </CardContent>
       </Card>
 
-      {((dataSource === 'mock' && !isExtracting && extractedData) || (dataSource === 'simulation' && extractedData)) && (
+      {((dataSource === 'mock' && !isExtracting && dataToDisplay) || (dataSource === 'simulation' && dataToDisplay)) && (
         <>
-          <ResultDisplayCard title={dataSource === 'simulation' ? "Recovered Data (from Simulation)" : "Extracted Data (Mock)"} icon={FileText}>
-            <Textarea value={extractedData} readOnly rows={15} className="font-mono text-xs bg-secondary/30" />
+          <ResultDisplayCard title={dataSource === 'simulation' ? "Recovered File Content (from Simulation)" : "Extracted Data (Mock)"} icon={FileText}>
+            <Textarea value={dataToDisplay} readOnly rows={15} className="font-mono text-xs bg-secondary/30" />
           </ResultDisplayCard>
           
           <ResultDisplayCard title={dataSource === 'simulation' ? "Simulation Load Log" : "Extraction Logs (Mock)"} icon={Terminal}>
-            <Textarea value={extractionLogs} readOnly rows={10} className="font-mono text-xs bg-secondary/30" />
+            <Textarea value={displayLogs} readOnly rows={10} className="font-mono text-xs bg-secondary/30" />
           </ResultDisplayCard>
 
           <Card className="shadow-lg">
@@ -184,7 +180,7 @@ export default function DataExtractionPage() {
                     <ScanSearch className="h-6 w-6 text-primary" />
                     <CardTitle className="text-xl">Next Steps</CardTitle>
                 </div>
-              <CardDescription>Proceed to analyze the extracted data for potential threats.</CardDescription>
+              <CardDescription>Proceed to analyze the displayed data for potential threats.</CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={handleAnalyzeThreats} className="w-full sm:w-auto">
@@ -196,7 +192,7 @@ export default function DataExtractionPage() {
         </>
       )}
       
-      {dataSource === 'mock' && !isExtracting && !extractedData && (
+      {dataSource === 'mock' && !isExtracting && !dataToDisplay && (
          <Card className="shadow-lg">
             <CardContent className="pt-6 text-center">
               <DatabaseZap className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
